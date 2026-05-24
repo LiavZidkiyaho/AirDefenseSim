@@ -1,0 +1,15 @@
+# CMake build directories
+cmake-build-debug/
+cmake-build-release/
+
+# IDE files (CLion / JetBrains)
+.idea/
+*.iws
+*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Executables and logs
+simulation_results.txt
