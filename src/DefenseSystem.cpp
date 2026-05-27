@@ -54,28 +54,66 @@ void DefenseSystem::runSectorAlgorithm() {
 
         double impactX = threat->getImpactX();
         double impactY = threat->getImpactY();
-
         double currentThreatX = threat->getX();
         double currentThreatY = threat->getY();
 
+        std::string threatName = threat->getId();
+        bool targetedByPrimary = false;
+
+
         for (auto& battery : inventory) {
             if (battery->getStatus() != InterceptorStatus::STANDBY) continue;
+
+            std::string batteryName = battery->getId();
+
+            if (threatName == "Ballistic" && batteryName != "Arrow 3") continue;
+            if (threatName == "Cruise Missile" && batteryName != "David Sling") continue;
+            if (threatName == "Grad Rocket" && batteryName != "Iron Dome") continue;
 
             bool willLandInSector = battery->isImpactInSector(impactX, impactY);
 
             double dx = currentThreatX - battery->getX();
             double dy = currentThreatY - battery->getY();
             double distanceToThreat = std::sqrt(dx * dx + dy * dy);
-
             bool isInsideFireRange = (distanceToThreat <= battery->getMaxInterceptRange());
 
             if (willLandInSector && isInsideFireRange) {
                 battery->assignTarget(threat);
                 threat->setTargeted(true);
+                targetedByPrimary = true;
 
-                std::cout << "[RADAR] Target locked and within range. Launching: "
-                          << battery->getId() << std::endl;
+                std::cout << "[RADAR] Primary Sector Allocation: " << threatName
+                          << " locked by dedicated system: " << batteryName << std::endl;
                 break;
+            }
+        }
+
+        if (!targetedByPrimary) {
+            for (auto& battery : inventory) {
+                if (battery->getStatus() != InterceptorStatus::STANDBY) continue;
+
+                std::string batteryName = battery->getId();
+
+
+                bool canProvideBackup = (threatName == "Ballistic" && batteryName == "Arrow 3") ||
+                                       (threatName == "Cruise Missile" && batteryName == "David Sling");
+
+                if (!canProvideBackup) continue;
+
+                double dx = currentThreatX - battery->getX();
+                double dy = currentThreatY - battery->getY();
+                double distanceToThreat = std::sqrt(dx * dx + dy * dy);
+                bool isInsideFireRange = (distanceToThreat <= battery->getMaxInterceptRange());
+
+                if (isInsideFireRange) {
+                    battery->assignTarget(threat);
+                    threat->setTargeted(true);
+
+                    std::cout << "[NETWORK ALERT] Failover activated! " << threatName
+                              << " missed local sector. Remote Backup initialized by: "
+                              << batteryName << " (Assisting nearby zone)" << std::endl;
+                    break;
+                }
             }
         }
     }

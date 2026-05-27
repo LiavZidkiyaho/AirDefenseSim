@@ -54,22 +54,24 @@ Description: Uses the quadratic formula based on physics equations (Gravity) to 
              and calculate the final (X, Y) coordinates where the threat will hit the ground.
  */
 void Threat::calculateImpactPosition() {
+    double vz_current = vz - (GRAVITY * time);
+
     double a = -0.5 * GRAVITY;
-    double b = vz;
-    double c = startZ;
+    double b = vz_current;
+    double c = z;
 
     double discriminant = (b * b) - (4 * a * c);
 
     if (discriminant >= 0) {
         double t1 = (-b + std::sqrt(discriminant)) / (2 * a);
         double t2 = (-b - std::sqrt(discriminant)) / (2 * a);
-        double timeToImpact = std::max(t1, t2);
+        double timeToImpactFromNow = std::max(t1, t2);
 
-        impactX = startX + (vx * timeToImpact);
-        impactY = startY + (vy * timeToImpact);
+        impactX = x + (vx * timeToImpactFromNow);
+        impactY = y + (vy * timeToImpactFromNow);
     } else {
-        impactX = startX;
-        impactY = startY;
+        impactX = x;
+        impactY = y;
     }
 }
 
@@ -86,6 +88,8 @@ void Threat::updatePosition(double dt) {
         x = startX + (vx * time);
         y = startY + (vy * time);
         z = startZ + (vz * time) - (0.5 * GRAVITY * time * time);
+
+        calculateImpactPosition();
 
         if (z <= 0) {
             z = 0;
